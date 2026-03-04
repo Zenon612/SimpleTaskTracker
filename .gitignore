@@ -1,6 +1,19 @@
-/.venv
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# Переменные окружения
 .env
+
+# База данных (локальная)
 *.db
-*.key
-*.pem
+*.sqlite3
+
+# Кэш Python
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Прочее
+*.log
