@@ -2,7 +2,7 @@ from typing import Any, Sequence
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.schemas.task import TaskResponse
+from app.schemas.task import TaskResponse, TaskUpdate
 from app.models.task import TaskModel
 from app.core.db import get_db
 
@@ -26,7 +26,7 @@ async def get_tasks(db: AsyncSession = Depends(get_db)) -> Sequence[Any]:
     return tasks
 
 @router.get("/{task_id}", response_model=TaskResponse)
-async def get_task(task_id: int, db: AsyncSession= Depends(get_db)): # если будет не int - вернёт 422
+async def get_task(task_id: int, db: AsyncSession= Depends(get_db)) -> type[TaskModel]: # если будет не int - вернёт 422
     task = await db.get(TaskModel, task_id)
 
     if not task:
@@ -34,7 +34,7 @@ async def get_task(task_id: int, db: AsyncSession= Depends(get_db)): # если 
     return task
 
 @router.delete("/{task_id}") # не добавлял response model, так как pydantic не пропустит ответ
-async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)) -> Any:
     task = await db.get(TaskModel, task_id)
 
     if not task:
@@ -43,3 +43,25 @@ async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(task)
     await db.commit()
     return {"message": f"task{task_id} deleted successfully"}
+
+
+@router.patch("/{task_id", response_model=TaskResponse)
+async def update_task(
+        task_id: int,
+        task: TaskUpdate,
+        db: AsyncSession = Depends(get_db)
+) -> type[TaskModel]:
+
+
+    db_task = await db.get(TaskModel, task_id)
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    update_data = task.model_dump(exclude_unset=True) # отсекает все нонтайпы, чтобы данные не затерлись
+
+    for key, value in update_data.items():
+        setattr(db_task, key, value)
+
+    await db.commit()
+    await db.refresh(db_task)
+    return db_task

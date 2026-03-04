@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1.tasks import router as task_router
+from app.api.v1.routers import router as task_router
 from app.core.db import engine
 from app.models.task import Base
 
